@@ -6,7 +6,7 @@ import math
 import time
 
 
-CACHE_TTL = 10
+CACHE_TTL = 5
 cache = {}
 
 
