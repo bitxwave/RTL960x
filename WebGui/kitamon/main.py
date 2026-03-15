@@ -126,10 +126,27 @@ def fetch_omci(target):
 
 def fetch_table(target):
 	login_url = f"http://{target}/admin/login.asp"
-	r = requests.get(login_url, timeout=5)
-	r.raise_for_status()
 
-	soup = BeautifulSoup(r.text, "html.parser")
+	def fetch_until_marker(url, marker="<!-- END API -->"):
+		r = requests.get(url, stream=True, timeout=5)
+		r.raise_for_status()
+
+		buffer = ""
+
+		for chunk in r.iter_content(chunk_size=1024, decode_unicode=True):
+			buffer += chunk
+
+			if marker in buffer:
+				buffer = buffer.split(marker)[0]
+				r.close()
+				break
+
+		return buffer
+
+	html = fetch_until_marker(login_url)
+
+	soup = BeautifulSoup(html, "html.parser")
+
 	table = soup.find("table", {"id": "api"})
 	if table is None:
 		raise RuntimeError("table id='api' not found")
